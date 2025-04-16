@@ -5,168 +5,204 @@ const Home = () => {
   const [users, setUsers] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [error, setError] = useState("");
+
   const getUsers = () => {
     fetch("http://localhost:5000/api/users").then((res) =>
       res.json().then((data) => setUsers(data))
     );
   };
+
   useEffect(() => {
     getUsers();
   }, []);
-  console.log(1234, users);
+
   const handleSubmit = async () => {
-    if (editingId) {
-      const response = await fetch(
-        `http://localhost:5000/api/users/${editingId}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(formData),
-        }
-      );
-    } else {
-      const response = await fetch("http://localhost:5000/api/users", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-      if (!response.ok) {
-        console.log(response);
-        setError(response.statusText);
-      } else {
-        setError("");
-      }
-      getUsers();
+    if (!formData.name || !formData.email) {
+      setError("Please fill all fields.");
+      return;
     }
 
-    setFormData({ name: "", email: "" });
-    getUsers();
-  };
+    const url = editingId
+      ? `http://localhost:5000/api/users/${editingId}`
+      : "http://localhost:5000/api/users";
 
-  const handleDelete = async (id) => {
-    const response = await fetch(`http://localhost:5000/api/users/${id}`, {
-      method: "DELETE",
+    const method = editingId ? "PUT" : "POST";
+
+    const response = await fetch(url, {
+      method,
       headers: {
         "Content-Type": "application/json",
       },
+      body: JSON.stringify(formData),
+    });
+
+    if (!response.ok) {
+      setError("Something went wrong!");
+    } else {
+      setError("");
+      setFormData({ name: "", email: "" });
+      setEditingId(null);
+      getUsers();
+    }
+  };
+
+  const handleDelete = async (id) => {
+    await fetch(`http://localhost:5000/api/users/${id}`, {
+      method: "DELETE",
     });
     getUsers();
   };
-  const handleUpdate = async (user) => {
+
+  const handleUpdate = (user) => {
     setFormData({ name: user.name, email: user.email });
     setEditingId(user._id);
-    getUsers();
   };
+
   return (
-    <div>
-      <h1>Welcome</h1>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          flexDirection: "column",
-          border: "1px solid #ccc",
-          width: "100%",
-          padding: "20px",
-        }}
-      >
+    <div style={styles.container}>
+      <h1 style={styles.title}>User Management</h1>
+
+      <div style={styles.card}>
         <input
           type="text"
           placeholder="Name"
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          style={{
-            padding: "10px",
-            borderRadius: "5px",
-            border: "1px solid #ccc",
-            margin: "0  20px",
-          }}
+          style={styles.input}
         />
         <input
           type="email"
           placeholder="Email"
           value={formData.email}
           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-          style={{
-            padding: "10px",
-            borderRadius: "5px",
-            border: "1px solid #ccc",
-            margin: "10px 0",
-          }}
+          style={styles.input}
         />
-        <button
-          style={{
-            padding: "10px 20px",
-            borderRadius: "5px",
-            border: "1px solid #ccc",
-            backgroundColor: "#007bff",
-            color: "#fff",
-            cursor: "pointer",
-          }}
-          onClick={handleSubmit}
-        >
-          {editingId ? "Update User" : " Add User"}
+        <button onClick={handleSubmit} style={styles.button}>
+          {editingId ? "Update User" : "Add User"}
         </button>
-        {error && <p style={{ color: "red" }}>{error}</p>}
+        {error && <p style={styles.error}>{error}</p>}
       </div>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          flexDirection: "column",
-          border: "1px solid #ccc",
-          width: "100%",
-          padding: "20px",
-        }}
-      >
-        <ul>
-          {users.map((user) => {
-            return (
-              <li key={user._id} style={{ listStyle: "none", margin: "10px" }}>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    width: "400px",
-                  }}
-                >
-                  <p>{user.id}</p>
-                  <div>{user.name}</div>
-                  <div>{user.email}</div>
-                  <button
+
+      <div style={styles.card}>
+        <h2 style={styles.subTitle}>User List</h2>
+        {users.length === 0 ? (
+          <p>No users found.</p>
+        ) : (
+          <ul style={{ padding: 0 }}>
+            {users.map((user) => (
+              <li key={user._id} style={styles.listItem}>
+                <div>
+                  <p style={{ margin: "4px 0", color: "black" }}>
+                    <strong>{user.name}</strong>
+                  </p>
+                  <p
                     style={{
-                      backgroundColor: "red",
-                      color: "white",
-                      padding: "3px",
+                      margin: "4px 0",
+                      fontSize: "14px",
+                      color: "black",
                     }}
+                  >
+                    {user.email}
+                  </p>
+                </div>
+                <div>
+                  <button
+                    onClick={() => handleUpdate(user)}
+                    style={{
+                      ...styles.actionButton,
+                      backgroundColor: "#f0ad4e",
+                    }}
+                  >
+                    Edit
+                  </button>
+                  <button
                     onClick={() => handleDelete(user._id)}
+                    style={{
+                      ...styles.actionButton,
+                      backgroundColor: "#d9534f",
+                    }}
                   >
                     Delete
                   </button>
-                  <button
-                    style={{
-                      backgroundColor: "green",
-                      color: "white",
-                      padding: "3px",
-                    }}
-                    onClick={() => handleUpdate(user)}
-                  >
-                    update
-                  </button>
                 </div>
               </li>
-            );
-          })}
-        </ul>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );
+};
+
+const styles = {
+  container: {
+    fontFamily: "Arial, sans-serif",
+    maxWidth: "600px",
+    margin: "40px auto",
+    padding: "20px",
+    backgroundColor: "#f8f9fa",
+  },
+  title: {
+    textAlign: "center",
+    fontSize: "32px",
+    marginBottom: "20px",
+    color: "black",
+  },
+  subTitle: {
+    marginBottom: "10px",
+    color: "#333",
+  },
+  card: {
+    backgroundColor: "#fff",
+    padding: "20px",
+    marginBottom: "20px",
+    borderRadius: "8px",
+    boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+    overflow: "hidden",
+    boxSizing: "border-box",
+  },
+  input: {
+    width: "100%",
+    padding: "10px",
+    marginBottom: "10px",
+    border: "1px solid #ccc",
+    borderRadius: "4px",
+    fontSize: "16px",
+    boxSizing: "border-box"
+  },
+  button: {
+    width: "100%",
+    padding: "10px",
+    fontSize: "16px",
+    backgroundColor: "#007bff",
+    color: "#fff",
+    border: "none",
+    borderRadius: "4px",
+    cursor: "pointer",
+    boxSizing: "border-box"
+  },
+  error: {
+    color: "red",
+    marginTop: "10px",
+    fontSize: "14px",
+  },
+  listItem: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#f1f1f1",
+    padding: "12px",
+    marginBottom: "10px",
+    borderRadius: "6px",
+  },
+  actionButton: {
+    border: "none",
+    padding: "6px 12px",
+    color: "#fff",
+    marginLeft: "8px",
+    borderRadius: "4px",
+    cursor: "pointer",
+  },
 };
 
 export default Home;

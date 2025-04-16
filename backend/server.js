@@ -1,4 +1,3 @@
-// mongodb+srv://vrushabh:12345@clustermern.tcsjlzk.mongodb.net/?retryWrites=true&w=majority&appName=Clustermern
 
 const express = require("express");
 const mongoose = require("mongoose");
